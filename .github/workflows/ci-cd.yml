@@ -16,8 +16,9 @@ jobs:
         image: postgres:14
         ports: ['5432:5432']
         env:
-          POSTGRES_USER: postgres
-          POSTGRES_PASSWORD: postgres
+          POSTGRES_HOST: postgres
+          #POSTGRES_PORT: 5432
+          POSTGRES_PASSWORD: changethispassword
           POSTGRES_DB: monprojet
 
     steps:
