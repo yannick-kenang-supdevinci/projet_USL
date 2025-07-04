@@ -1,0 +1,58 @@
+---
+- name: Create prometheus directory
+  file:
+    path: "{{ prometheus_dir }}"
+    state: directory
+    mode: '0755'
+  become: yes
+
+- name: Generate Prometheus configuration
+  template:
+    src: prometheus.yml.j2
+    dest: "{{ prometheus_dir }}/prometheus.yml"
+    mode: '0644'
+  become: yes
+
+- name: Create Docker volume for Prometheus data
+  docker_volume:
+    name: prometheus-data
+  become: yes
+
+- name: Check if prometheus container exists
+  docker_container_info:
+    name: prometheus
+  register: prometheus_container
+  become: yes
+
+- name: Stop existing Prometheus container if running
+  docker_container:
+    name: prometheus
+    state: stopped
+  when: prometheus_container.exists
+  become: yes
+
+- name: Remove existing Prometheus container
+  docker_container:
+    name: prometheus
+    state: absent
+  when: prometheus_container.exists
+  become: yes
+
+- name: Run Prometheus container
+  docker_container:
+    name: prometheus
+    image: "prom/prometheus:{{ prometheus_version }}"
+    state: started
+    ports:
+      - "{{ prometheus_port }}:9090"
+    volumes:
+      - "{{ prometheus_dir }}/prometheus.yml:/etc/prometheus/prometheus.yml"
+      - "prometheus-data:/prometheus"
+    command:
+      - '--config.file=/etc/prometheus/prometheus.yml'
+      - '--storage.tsdb.retention.time={{ prometheus_retention }}'
+      - '--web.console.libraries=/usr/share/prometheus/console_libraries'
+      - '--web.console.templates=/usr/share/prometheus/consoles'
+    restart_policy: unless-stopped
+  become: yes
+

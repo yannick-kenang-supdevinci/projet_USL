@@ -1,0 +1,20 @@
+---
+- name: Deploy Prometheus and Grafana Monitoring Stack
+  hosts: support
+  become: true
+  vars_files:
+    - vars/env.yml
+    - vars/password.yml
+  
+  roles:
+    - ../../roles/prometheus
+    - ../../roles/grafana
+    - ../../roles/node_exporter
+  
+  post_tasks:
+    - name: Display access information
+      debug:
+        msg: 
+          - "Grafana is available at http://{{ ansible_host }}:{{ grafana_port }}"
+          - "Default login: {{ grafana_admin_user }} / {{ grafana_admin_password }}"
+          - "Prometheus is available at http://{{ ansible_host }}:{{ prometheus_port }}"

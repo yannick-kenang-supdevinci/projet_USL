@@ -1,0 +1,65 @@
+---
+- name: Deploy Node Exporter on all hosts
+  hosts: all
+  become: true
+  
+  tasks:
+    - name: Install required packages
+      apt:
+        name:
+          - ca-certificates
+          - curl
+          - python3-pip
+        state: present
+        update_cache: yes
+      when: ansible_os_family == 'Debian'
+
+    - name: Install snapd
+      apt:
+        name: snapd
+        state: present
+      when: ansible_os_family == 'Debian'
+
+    - name: Install Docker via snap
+      snap:
+        name: docker
+        classic: yes
+
+    - name: Install Docker Python module
+      pip:
+        name: docker
+        state: present
+
+    - name: Create docker group if it doesn't exist
+      group:
+        name: docker
+        state: present
+
+    - name: Add user to docker group
+      user:
+        name: "{{ ansible_user }}"
+        groups: docker
+        append: yes
+
+    - name: Pull Node Exporter Docker image
+      docker_image:
+        name: "prom/node-exporter:latest"
+        source: pull
+        
+    - name: Run Node Exporter container
+      docker_container:
+        name: node-exporter
+        image: "prom/node-exporter:latest"
+        ports:
+          - "9100:9100"
+        volumes:
+          - "/proc:/host/proc:ro"
+          - "/sys:/host/sys:ro"
+          - "/:/rootfs:ro"
+        command:
+          - '--path.procfs=/host/proc'
+          - '--path.rootfs=/rootfs'
+          - '--path.sysfs=/host/sys'
+          - '--collector.filesystem.mount-points-exclude=^/(sys|proc|dev|host|etc)($$|/)'
+        restart_policy: unless-stopped
+        container_default_behavior: "no_defaults"

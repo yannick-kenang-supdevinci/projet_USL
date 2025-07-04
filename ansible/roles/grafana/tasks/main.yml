@@ -1,0 +1,74 @@
+---
+- name: Create grafana directory
+  file:
+    path: "{{ grafana_dir }}"
+    state: directory
+    mode: '0755'
+    owner: "{{ ansible_user }}"
+    group: "{{ ansible_user }}"
+  become: yes
+
+- name: Create Docker volume for Grafana data
+  docker_volume:
+    name: grafana-storage
+  become: yes
+
+- name: Stop existing Grafana container if running
+  docker_container:
+    name: grafana
+    state: stopped
+  ignore_errors: yes
+  become: yes
+
+- name: Remove existing Grafana container
+  docker_container:
+    name: grafana
+    state: absent
+  ignore_errors: yes
+  become: yes
+
+- name: Run Grafana container
+  docker_container:
+    name: grafana
+    image: "grafana/grafana:{{ grafana_version }}"
+    state: started
+    ports:
+      - "{{ grafana_port }}:3000"
+    volumes:
+      - "grafana-storage:/var/lib/grafana"
+    env:
+      GF_SECURITY_ADMIN_PASSWORD: "{{ grafana_admin_password }}"
+      GF_SECURITY_ADMIN_USER: "{{ grafana_admin_user }}"
+      GF_USERS_ALLOW_SIGN_UP: "false"
+    restart_policy: unless-stopped
+  become: yes
+
+- name: Wait for Grafana to be ready
+  uri:
+    url: "http://localhost:{{ grafana_port }}/api/health"
+    status_code: 200
+  register: result
+  until: result.status == 200
+  retries: 30
+  delay: 10
+  tags: grafana
+
+- name: Configure Prometheus data source
+  uri:
+    url: "http://localhost:{{ grafana_port }}/api/datasources"
+    method: POST
+    user: "{{ grafana_admin_user }}"
+    password: "{{ grafana_admin_password }}"
+    body_format: json
+    body:
+      name: "Prometheus"
+      type: "prometheus"
+      url: "http://10.20.1.10:{{ prometheus_port }}"
+      access: "proxy"
+      isDefault: true
+      basicAuth: false
+    headers:
+      Content-Type: "application/json"
+    status_code: 200,409
+    force_basic_auth: yes
+  tags: grafana

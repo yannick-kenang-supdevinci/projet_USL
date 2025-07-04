@@ -1,0 +1,39 @@
+---
+- name: Check if node-exporter container exists
+  docker_container_info:
+    name: node-exporter
+  register: node_exporter_container
+  become: yes
+
+- name: Stop existing Node Exporter container if running
+  docker_container:
+    name: node-exporter
+    state: stopped
+  when: node_exporter_container.exists
+  become: yes
+
+- name: Remove existing Node Exporter container
+  docker_container:
+    name: node-exporter
+    state: absent
+  when: node_exporter_container.exists
+  become: yes
+
+- name: Run Node Exporter container
+  docker_container:
+    name: node-exporter
+    image: "prom/node-exporter:{{ node_exporter_version }}"
+    state: started
+    ports:
+      - "{{ node_exporter_port }}:9100"
+    volumes:
+      - /proc:/host/proc:ro
+      - /sys:/host/sys:ro
+      - /:/rootfs:ro
+    command:
+      - '--path.procfs=/host/proc'
+      - '--path.sysfs=/host/sys'
+      - '--collector.filesystem.ignored-mount-points'
+      - '^/(sys|proc|dev|host|etc)($|/)'
+    restart_policy: unless-stopped
+  become: yes
