@@ -1,0 +1,32 @@
+-r production.txt
+
+Werkzeug[watchdog]
+ipdb
+psycopg[binary]
+
+# Testing
+# ------------------------------------------------------------------------------
+mypy
+django-stubs[compatible-mypy]
+pytest
+pytest-sugar
+
+# Documentation
+# ------------------------------------------------------------------------------
+sphinx
+sphinx-autobuild
+
+# Code quality
+# ------------------------------------------------------------------------------
+ruff
+coverage
+djlint
+pre-commit
+
+# Django
+# ------------------------------------------------------------------------------
+factory-boy
+django-debug-toolbar
+django-extensions
+django-coverage-plugin
+pytest-django

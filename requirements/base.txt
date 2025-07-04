@@ -1,0 +1,16 @@
+python-slugify
+Pillow
+argon2-cffi
+redis
+hiredis
+
+# Django
+# ------------------------------------------------------------------------------
+django>=4.2,<4.3
+django-environ
+django-model-utils
+django-allauth[mfa]
+django-crispy-forms
+crispy-bootstrap5
+django-redis
+wagtail>=5.2,<5.3

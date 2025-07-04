@@ -1,0 +1,9 @@
+-r base.txt
+
+gunicorn
+psycopg[c]
+
+# Django
+# ------------------------------------------------------------------------------
+django-storages[azure]
+django-anymail
