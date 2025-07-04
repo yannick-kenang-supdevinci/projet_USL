@@ -22,6 +22,12 @@ jobs:
 
       - name: Install second dependencies
         run: pip install -r requirements/local.txt
+
+      - name: Install base dependencies
+        run: pip install -r requirements/base.txt
+
+      - name: Install test dependencies
+        run: pip install pytest
           
       - name: Run unit tests
         run: |
